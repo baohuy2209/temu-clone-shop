@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  cart         Cart?
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id
+  userId    Int
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CartLineItem {
+  id              String @id
+  sanityProductId String
+  quantity        Int
+  title           String
+  price           Float
+  image           String
+  cartId          String
+  cart            Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id     String         @id
+  userId Int?           @unique
+  user   User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  CartLineItem[]
+}
