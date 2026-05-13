@@ -3,7 +3,7 @@ import Stripe from "stripe";
 
 const getCheckoutSession = async (sessionId: string) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2026-02-25.clover",
+    apiVersion: "2026-04-22.dahlia",
   });
 
   return stripe.checkout.sessions.retrieve(sessionId);
