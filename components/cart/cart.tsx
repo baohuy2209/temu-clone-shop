@@ -35,6 +35,7 @@ const CartItem = ({ item }: { item: CartItemType }) => {
           alt={item.title}
           fill
           className="object-cover"
+          unoptimized
         />
       </div>
 
