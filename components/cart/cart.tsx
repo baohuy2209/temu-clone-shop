@@ -121,6 +121,7 @@ const Cart = () => {
   }, []);
 
   const [loadingProceed, setLoadingProceed] = useState<boolean>(false);
+  // Handle checkout
   const handleProceedToCheckout = async () => {
     if (!cartId || loadingProceed) {
       return;
@@ -131,7 +132,7 @@ const Cart = () => {
 
     try {
       const anyWindow = window as any;
-
+      // using unamic
       if (anyWindow.umami) {
         anyWindow.umami.track("proceed_to_checkout", {
           cartId: cartId,

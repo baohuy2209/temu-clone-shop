@@ -89,6 +89,7 @@ const ProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
                   className="object-cover hover:scale-105 transition-transform duration-300"
                   alt={product.title ?? "Product Image"}
                   src={urlFor(product.image).url()}
+                  unoptimized
                 />
               </div>
             </div>

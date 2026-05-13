@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "pnpm dlx prisma db push",
-    "db:generate": "pnpm dlx prisma init --db --output ./generated/prisma",
+    "db:generate": "pnpm dlx prisma generate",
     "db:studio": "pnpm dlx prisma studio",
     "db:pull": "pnpm dlx prisma db pull",
     "db:migrate": "pnpm dlx prisma migrate dev --name init",

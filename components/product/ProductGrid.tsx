@@ -1,5 +1,4 @@
 import { Product } from "@/sanity.types";
-import React from "react";
 import ProductItem from "@/components/product/ProductItem";
 
 export interface ProductGridProps {
