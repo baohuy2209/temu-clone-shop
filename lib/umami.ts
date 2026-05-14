@@ -2,7 +2,8 @@ import umami from "@umami/node";
 
 umami.init({
   websiteId: "88093007-ccaf-45aa-9190-45904651d254", // Your website id
-  hostUrl: "https://cloud.umami.is", // URL to your Umami instance
+  hostUrl:
+    "https://cloud.umami.is/analytics/us/websites/88093007-ccaf-45aa-9190-45904651d254", // URL to your Umami instance
 });
 
 export const umamiTrackCheckoutSuccessEvent = async (payload: {
