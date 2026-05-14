@@ -121,7 +121,7 @@ const WinningItem = ({
     localStorage.setItem("has-played-wheel-of-fortune", "true");
 
     setStore(updatedCart);
-
+    // sleep 
     await new Promise((resolve) => setTimeout(resolve, 500));
     router.refresh();
     openCart();
