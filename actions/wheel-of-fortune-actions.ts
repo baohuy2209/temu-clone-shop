@@ -11,7 +11,7 @@ export const getWheelOfFortuneConfiguration = async () => {
     useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
   });
   const randomProducts = await client.fetch<Product[]>(
-    `*[_type == "product"][0..0]`,
+    `*[_type == "product"][0..6]`,
   );
   const today = new Date();
   const day = today.getDate();

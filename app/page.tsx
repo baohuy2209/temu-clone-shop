@@ -12,8 +12,6 @@ export default async function Home() {
   const { randomProducts, winningIndex } =
     await getWheelOfFortuneConfiguration();
 
-  // const { randomProducts, winningIndex } =
-  //   await getWheelOfFortuneConfiguration();
   return (
     <div>
       <SalesCampaignBanner />

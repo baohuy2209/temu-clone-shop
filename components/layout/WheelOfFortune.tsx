@@ -1,8 +1,15 @@
 "use client";
 
+import { addWinningItemToCart } from "@/actions/cart-action";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Product } from "@/sanity.types";
+import { useCartStore } from "@/stores/cart-store";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/shallow";
+import Image from "next/image";
+import { urlFor } from "@/sanity/lib/image";
+import { Loader2, ShoppingCart } from "lucide-react";
 type WheelOfFortuneProps = {
   products: Product[];
   winningIndex: number;
@@ -82,6 +89,152 @@ const getTextStyle = (): React.CSSProperties => {
     flexDirection: "column",
   };
 };
+const WinningItem = ({
+  product,
+  onClose,
+}: {
+  product: Product;
+  onClose: () => void;
+}) => {
+  const router = useRouter();
+
+  const {
+    cartId,
+    setStore,
+    open: openCart,
+  } = useCartStore(
+    useShallow((state) => ({
+      cartId: state.cartId,
+      setStore: state.setStore,
+      open: state.open,
+    })),
+  );
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddToCart = async () => {
+    if (!cartId) {
+      return;
+    }
+    setIsAdding(true);
+
+    const updatedCart = await addWinningItemToCart(cartId, product);
+    localStorage.setItem("has-played-wheel-of-fortune", "true");
+
+    setStore(updatedCart);
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    router.refresh();
+    openCart();
+    onClose();
+
+    setIsAdding(false);
+  };
+
+  return (
+    <div className="text-center animate-[slideUp_0.5s_ease-out]">
+      <div
+        className={`
+                    p-8 rounded-xl bg-white shadow-2xl
+                    backdrop-blur-lg bg-opacity-90
+                    border border-white/20
+                    transform transition-all duration-500
+                    hover:shadow-emerald-500/20 hover:scale-[1.01]
+                `}
+      >
+        <div className="relative p-4">
+          <div className="absolute inset-0 bg-linear-to-r from-emerald-500/10 to-sky-500/10 animate-pulse rounded-lg" />
+          <h3
+            className={`
+                            text-2xl font-bold text-emerald-600 p-4 mb-8
+                            animate-[pulse_2s_ease-in-out_infinite]
+                            [text-shadow:0_1px_2px_rgb(0_0_0/10%)]
+                        `}
+          >
+            🎉 Congratulations 🎉
+          </h3>
+
+          <div className="flex flex-col items-center gap-6">
+            {product.image && (
+              <div className="relative group">
+                {/* Sparkle Effects */}
+                <div
+                  className={`
+                                        absolute -inset-4 bg-linear-to-r from-yellow-400 via-red-500 to-pink-500
+                                        rounded-2xl opacity-75 blur-lg animate-pulse group-hover:opacity-100 transition-opacity duration-500
+                                    `}
+                />
+
+                {/* Main product content */}
+                <div className="relative bg-linear-to-br from-white to-gray-50 p-4 rounded-xl shadow-2xl">
+                  {/* Price tag */}
+                  <div className="absolute -top-3 -right-3 bg-red-600 text-white px-4 py-1 rounded-full font-black text-lg shadow-lg z-10">
+                    FREE!
+                  </div>
+
+                  {/* Image */}
+                  <div className="relative rounded-lg overflow-hidden border-2 border-yellow-400/50 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                    <Image
+                      src={urlFor(product.image).width(256).url()}
+                      alt={product.title || "Winning Product!"}
+                      className="object-cover transform transition-all duration-500 group-hover:scale-105"
+                      width={256}
+                      height={256}
+                      unoptimized
+                    />
+
+                    <div className="absolute inset-0 bg-linear-to-tr from-yellow-400/20 to-transparent" />
+
+                    <div className="absolute bottom-2 left-2 bg-yellow-500/90 text-white text-xs font-bold px-2 py-1 rounded-full backdrop-blur-sm">
+                      Limited Time Only!
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="text-center space-y-2">
+              <h4 className="text-xl font-bold text-gray-800">You won:</h4>
+              <p className="text-lg text-emerald-600 font-semibold">
+                {product.title}
+              </p>
+              {product.description && (
+                <p className="text-sm text-muted-foreground">
+                  {product.description}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleAddToCart}
+          disabled={isAdding}
+          className={`
+                        mt-6 w-full py-4 px-8 rounded-full font-bold
+                        transition-all duration-300 transform
+                        flex items-center justify-center gap-2
+                        hover:scale-105 active:scale-95
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        bg-linear-to-r from-emerald-500 to-emerald-600 text-white
+                    `}
+        >
+          {isAdding ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Adding to Cart...
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="w-5 h-5" />
+              Claim Your Prize!
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const PriceTag = ({ price }: { price: number }) => {
   return (
     <div className="flex items-center">
@@ -106,6 +259,39 @@ function WheelOfFortune({ products, winningIndex }: WheelOfFortuneProps) {
       return () => clearTimeout(timer);
     }
   }, []);
+  const handleSpin = () => {
+    if (isSpinning || hasSpin) {
+      return;
+    }
+    setIsSpinning(true);
+    setHasSpin(true);
+    setShowWinningItem(false);
+    setWheelStyle({ animation: "none" });
+    requestAnimationFrame(() => {
+      const numberOfSpins = 5;
+      const degreesPerProduct = 360 / products.length;
+      const spinToIndex = winningIndex;
+      // chi vi tri trong o thang de trong tu nhien 
+      const randomOffset = degreesPerProduct * (0.2 + Math.random() * 0.6);
+      const degrees =
+        numberOfSpins * 360 +
+        spinToIndex * degreesPerProduct -
+        degreesPerProduct / 2 +
+        randomOffset;
+      setWheelStyle({
+        transform: `rotate(-${degrees}deg)`,
+        // thuoc tinh xoay
+        transition: "transform 4s cubic-bezier(0.17, 0.67, 0.08, 0.99)",
+        animation: "none",
+      });
+      setTimeout(() => {
+        setIsSpinning(false);
+        setTimeout(() => {
+          setShowWinningItem(true);
+        }, 500);
+      }, 4000);
+    });
+  };
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-200 p-0">
@@ -126,7 +312,7 @@ function WheelOfFortune({ products, winningIndex }: WheelOfFortuneProps) {
             className={`relative w-87.5 h-87.5 md:w-150 md:h-150 transition-all duration-1000 transform ${showWinningItem ? "scale-0 opacity-0 rotate-100" : "scale-100 opacity-100"}`}
           >
             <div
-              className={`absolute top-1/2 right-0 -translate-y-1/2 translate-x-2 w-0 h-0 border-t-5 border-t-transparentr border-r-10 border-r-red-600 border-b-5 border-b-transparent z-20`}
+              className={`absolute top-1/2 right-0 -translate-y-1/2 translate-x-2 w-0 h-0 border-t-5 border-t-transparent border-r-10 border-r-red-600 border-b-5 border-b-transparent z-20`}
             />
             <div
               className={`absolute inset-0 rounded-full overflow-hidden border-0 border-gray-200 shadow-[0_0_20px_rgba(0,0,0,0.2)] ${!isSpinning && !hasSpin && "animate-[float_3s_ease-in-out_infinite]"}`}
@@ -152,6 +338,66 @@ function WheelOfFortune({ products, winningIndex }: WheelOfFortuneProps) {
               ))}
             </div>
           </div>
+          <div
+            className={`
+                            absolute inset-0 flex items-center justify-center p-8
+                            transition-all duration-1000 ease-in-out transform
+                            ${!showWinningItem ? "scale-0 opacity-0 translate-y-full" : "scale-100 opacity-100 translate-y-0"}
+                        `}
+          >
+            {hasSpin && !isSpinning && (
+              <WinningItem
+                product={products[winningIndex]}
+                onClose={() => setIsOpen(false)}
+              />
+            )}
+          </div>
+          <button
+            className={`
+              relative px-8 py-4 rounded-full font-bold text-white text-lg transition-all bg-linear-to-r from-red-500 via-yellow-500 to-red-500 bg-size-[200%_100%] animate-[gradient-x_2s_linear_infinite] border-4 border-yellow-300 shadow-[0_0_20px_rgba(234, 179, 8, 0.5)] hover:shadow-[0_0_30px_rgba(234,179,8,0.8)] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${showWinningItem ? "opacity-0 scale-0 -translate-y-full" : ""} 
+              before:absolute before:inset-0 before:bg-white/20 before:animate-[pulse_1s_ease-in-out_infinite] 
+              `}
+            onClick={handleSpin}
+            disabled={isSpinning || hasSpin}
+          >
+            {isSpinning ? (
+              <span className="inline-flex items-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Spinning...
+              </span>
+            ) : hasSpin ? (
+              "🎉 Congratulations! 🎉"
+            ) : (
+              <>
+                <span className="animate-[pulse_1s_ease-in-out_infinite]">
+                  🎁
+                </span>
+                {" SPIN NOW! "}
+                <span className="animate-[pulse_1s_ease-in-out_infinite]">
+                  🎁
+                </span>
+              </>
+            )}
+          </button>
         </div>
       </DialogContent>
     </Dialog>
